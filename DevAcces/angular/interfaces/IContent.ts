@@ -2,6 +2,12 @@
 module App {
     export interface IContent {
         greeting: string;
-        login: (name: string) => void;
+        aaa: (name: string) => void;
+        data: {
+            login: string,
+            birthDate: Date,
+            age: number
+        }
+
     }
 }

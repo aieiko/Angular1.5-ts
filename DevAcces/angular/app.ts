@@ -3,5 +3,6 @@ module App {
     'use strict';
 
     angular.module('app', [])
-        .component('contentcomponent', new ContentComponent());
+        .component('contentcomponent', new ContentComponent())
+        .component('localstorecomponent', new LocalStoreComponent());
 }
