@@ -1,5 +1,4 @@
 /// <reference path="../typings/tsd.d.ts" />
-/// <reference path="../typings/tsd.d.ts" />
 /// <reference path="../interfaces/IContent.ts" />
 var App;
 (function (App) {
@@ -90,11 +89,4 @@ var App;
     })();
     App.LocalStoreComponent = LocalStoreComponent;
 })(App || (App = {}));
-/// <reference path="typings/tsd.d.ts" />
-var App;
-(function (App) {
-    'use strict';
-    angular.module('app', [])
-        .component('contentcomponent', new App.ContentComponent())
-        .component('localstorecomponent', new App.LocalStoreComponent());
-})(App || (App = {}));
+//# sourceMappingURL=ContentComponent.js.map

@@ -6,11 +6,11 @@ module App {
     class ContentCtrl implements IContent{
         public paths: Object;
         public myPath: string;
-        public master: Array<Object>;
+        public master: Array<any>;
         public data: Object;
         public user: {login; birthDate};
         public editUser: {login; birthDate};
-        public edit: any;
+        public editButtons: any;
 
         constructor() {
             this.paths = ['choose path', 'LocalStore', 'API', 'path to JSON'];
@@ -19,6 +19,7 @@ module App {
         }
 
         add() {
+            console.log(this.user.birthDate);
             this.data = {
                 login: this.user.login,
                 birthDate: this.user.birthDate,
@@ -27,11 +28,11 @@ module App {
             this.master.push(this.data);
             localStorage.setItem('CRUD', JSON.stringify(this.master));
             this.user = {login: null, birthDate: null};
-            if(!this.edit) {
-                this.edit = new Array();
-                this.edit[0] = false
+            if(!this.editButtons) {
+                this.editButtons = new Array();
+                this.editButtons[0] = false
             } else {
-                this.edit[this.edit.length] = false;
+                this.editButtons[this.editButtons.length] = false;
             }
         }
 
@@ -41,24 +42,27 @@ module App {
         }
 
         editPerson(index) {
-            this.edit[index] = true;
-            console.log(index);
+            this.editButtons[index] = true;
         }
 
         savePerson(index) {
-            this.edit[index] = false;
-            this.data = {
-                login: this.editUser.login,
-                birthDate: this.editUser.birthDate,
-                age: (this.editUser.birthDate) ? Math.floor((+new Date() - this.editUser.birthDate)/(1000 * 60 *60 * 24 * 365)) : null
-            };
-            this.master[index] = this.data;
-            localStorage.setItem('CRUD', JSON.stringify(this.master));
-            this.editUser= {login: null, birthDate: null};
+            if(!this.editUser || !this.editUser[index]) {
+                this.editButtons[index] = false;
+            } else {
+                this.editButtons[index] = false;
+                this.data = {
+                    login: (this.editUser[index].login == null) ? this.master[index].login : this.editUser[index].login,
+                    birthDate: (this.editUser[index].birthDate == null) ? this.master[index].birthDate : this.editUser[index].birthDate,
+                    age: (this.editUser[index].birthDate) ? Math.floor((+new Date() - this.editUser[index].birthDate)/(1000 * 60 *60 * 24 * 365)) : (this.master[index].age == null) ? null : this.master[index].age
+                };
+                this.master[index] = this.data;
+                localStorage.setItem('CRUD', JSON.stringify(this.master));
+                this.editUser[index]= {login: null, birthDate: null};
+            }
         }
 
         cancel(index) {
-            this.edit[index] = false;
+            this.editButtons[index] = false;
             this.editUser= {login: null, birthDate: null};
         }
 
@@ -122,19 +126,20 @@ module App {
                                 <tr ng-repeat="item in $ctrl.master track by $index">
                                 <div>
                                     <td>
-                                        <input type="text" ng-show="!!$ctrl.edit[$index]" ng-minlength="3" ng-maxlength="8" ng-model="$ctrl.editUser.login" placeholder="{{item.login}}"/>
-                                        <div ng-hide="!!$ctrl.edit[$index]">{{item.login}}</div>
+                                        <input type="text" ng-show="!!$ctrl.editButtons[$index]" ng-minlength="3" ng-maxlength="8" ng-model="$ctrl.editUser[$index].login" placeholder="{{item.login}}"/>
+                                        <div ng-hide="!!$ctrl.editButtons[$index]">{{item.login}}</div>
                                     </td>
                                     <td>
-                                        <input type="date" ng-show="!!$ctrl.edit[$index]" ng-model="$ctrl.editUser.birthDate" placeholder="{{item.birthDate.getFullYear()}}-{{(item.birthDate.getMonth() == 0) ? 12 : item.birthDate.getMonth()+1}}-{{item.birthDate.getDate()}}"/>
-                                        <div ng-hide="!!$ctrl.edit[$index]">{{item.birthDate.getFullYear()}}-{{(item.birthDate.getMonth() == 0) ? 12 : item.birthDate.getMonth()+1}}-{{item.birthDate.getDate()}}</div>
+                                        <input type="date" ng-show="!!$ctrl.editButtons[$index]" ng-model="$ctrl.editUser[$index].birthDate"
+                                        placeholder="{{(item.birthDate == null) ? '' : item.birthDate.getFullYear()+'-'+(item.birthDate.getMonth()+1)+'-'+item.birthDate.getDate()}}"/>
+                                        <div ng-hide="!!$ctrl.editButtons[$index]">{{(item.birthDate == null) ? '' : item.birthDate.getFullYear()+'-'+(item.birthDate.getMonth()+1)+'-'+item.birthDate.getDate()}}</div>
                                     </td>
                                     <td>{{item.age}}
-                                        <div ng-show="!!$ctrl.edit[$index]" style="float: right">
+                                        <div ng-show="!!$ctrl.editButtons[$index]" style="float: right">
                                             <button type="button" class="btn btn-success" ng-click="$ctrl.savePerson($index)">Save</button>
                                             <button type="button" class="btn btn-danger" ng-click="$ctrl.cancel($index)">Cancel</button>
                                         </div>
-                                        <div ng-hide="!!$ctrl.edit[$index]" style="float: right">
+                                        <div ng-hide="!!$ctrl.editButtons[$index]" style="float: right">
                                             <button type="button" class="btn btn-warning" ng-click="$ctrl.editPerson($index)">Edit</button>
                                             <button type="button" class="btn btn-danger" ng-click="$ctrl.deletePerson($index)">Delete</button>
                                         </div>
