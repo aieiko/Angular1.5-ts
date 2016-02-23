@@ -6,28 +6,37 @@ module App {
     class ContentCtrl implements IContent{
         public paths: Object;
         public myPath: string;
-        public master: Array<any>;
-        public data: Object;
-        public user: {login; birthDate};
-        public editUser: {login; birthDate};
+        public data: any;
+        public user: Object;
+        public addUser: {login; birthDate};
+        public editUsers: {login; birthDate};
         public editButtons: any;
 
         constructor() {
             this.paths = ['choose path', 'LocalStore', 'API', 'path to JSON'];
             this.myPath = this.paths[0];
-            this.master = [];
+            this.data = (localStorage.length == 1) ? [] : JSON.parse(localStorage['CRUD']);
+            if(localStorage.length == 1) {
+                this.editButtons = false;
+            } else {
+                this.editButtons = [];
+                for(var i=0; i <= this.data.length-1; i++){
+                    this.editButtons[i] = false;
+                    this.data[i].birthDate = new Date(Date.parse(this.data[i].birthDate));
+                }
+            }
         }
 
         add() {
-            console.log(this.user.birthDate);
-            this.data = {
-                login: this.user.login,
-                birthDate: this.user.birthDate,
-                age: (this.user.birthDate) ? Math.floor((+new Date() - this.user.birthDate)/(1000 * 60 *60 * 24 * 365)) : null
+            console.log(this.editButtons);
+            this.user = {
+                login: this.addUser.login,
+                birthDate: this.addUser.birthDate,
+                age: (this.addUser.birthDate) ? Math.floor((+new Date() - this.addUser.birthDate)/(1000 * 60 *60 * 24 * 365)) : null
             };
-            this.master.push(this.data);
-            localStorage.setItem('CRUD', JSON.stringify(this.master));
-            this.user = {login: null, birthDate: null};
+            this.data.push(this.user);
+            localStorage.setItem('CRUD', JSON.stringify(this.data));
+            this.addUser = {login: null, birthDate: null};
             if(!this.editButtons) {
                 this.editButtons = new Array();
                 this.editButtons[0] = false
@@ -37,8 +46,8 @@ module App {
         }
 
         deletePerson(index) {
-            this.master.splice(index, 1);
-            localStorage.setItem('CRUD', JSON.stringify(this.master));
+            this.data.splice(index, 1);
+            localStorage.setItem('CRUD', JSON.stringify(this.data));
         }
 
         editPerson(index) {
@@ -46,24 +55,24 @@ module App {
         }
 
         savePerson(index) {
-            if(!this.editUser || !this.editUser[index]) {
+            if(!this.editUsers || !this.editUsers[index]) {
                 this.editButtons[index] = false;
             } else {
                 this.editButtons[index] = false;
-                this.data = {
-                    login: (this.editUser[index].login == null) ? this.master[index].login : this.editUser[index].login,
-                    birthDate: (this.editUser[index].birthDate == null) ? this.master[index].birthDate : this.editUser[index].birthDate,
-                    age: (this.editUser[index].birthDate) ? Math.floor((+new Date() - this.editUser[index].birthDate)/(1000 * 60 *60 * 24 * 365)) : (this.master[index].age == null) ? null : this.master[index].age
+                this.user = {
+                    login: (this.editUsers[index].login == null) ? this.data[index].login : this.editUsers[index].login,
+                    birthDate: (this.editUsers[index].birthDate == null) ? this.data[index].birthDate : this.editUsers[index].birthDate,
+                    age: (this.editUsers[index].birthDate) ? Math.floor((+new Date() - this.editUsers[index].birthDate)/(1000 * 60 *60 * 24 * 365)) : (this.data[index].age == null) ? null : this.data[index].age
                 };
-                this.master[index] = this.data;
-                localStorage.setItem('CRUD', JSON.stringify(this.master));
-                this.editUser[index]= {login: null, birthDate: null};
+                this.data[index] = this.user;
+                localStorage.setItem('CRUD', JSON.stringify(this.data));
+                this.editUsers[index]= {login: null, birthDate: null};
             }
         }
 
         cancel(index) {
             this.editButtons[index] = false;
-            this.editUser= {login: null, birthDate: null};
+            this.editUsers= {login: null, birthDate: null};
         }
 
     }
@@ -91,15 +100,15 @@ module App {
                                 </div>
                                 <h1>{{$ctrl.greeting}}</h1>
                                 <h1>{{$ctrl.myPath}}</h1>
-                                <h1>{{$ctrl.master}}</h1>
+                                <h1>{{$ctrl.data}}</h1>
 
 
                                 <form class="form-inline" name="userForm" ng-submit="$ctrl.add()" novalidate>
 
                                     <div class="form-group" ng-class="{ 'has-error' : userForm.login.$invalid && !userForm.login.$pristine }">
                                         <label>Login</label>
-                                        <input type="text" name="login" class="form-control" ng-model="$ctrl.user.login" ng-minlength="3" ng-maxlength="8" required>
-                                        <p ng-show="userForm.login.$invalid && !userForm.login.$pristine && $ctrl.user.login.length > 0 || userForm.login.$error.minlength || userForm.login.$error.maxlength"
+                                        <input type="text" name="login" class="form-control" ng-model="$ctrl.addUser.login" ng-minlength="3" ng-maxlength="8" required>
+                                        <p ng-show="userForm.login.$invalid && !userForm.login.$pristine && $ctrl.addUser.login.length > 0 || userForm.login.$error.minlength || userForm.login.$error.maxlength"
                                            style="position: absolute"
                                            class="alert alert-danger">You Login is empty or short or overlong.</p>
 
@@ -107,7 +116,7 @@ module App {
 
                                     <div class="form-group" ng-class="{ 'has-error' : userForm.date.$invalid && !userForm.date.$pristine }">
                                         <label>Birh date</label>
-                                        <input type="date" name="date" class="form-control" ng-model="$ctrl.user.birthDate" placeholder="2000-11-02">
+                                        <input type="date" name="date" class="form-control" ng-model="$ctrl.addUser.birthDate" placeholder="2000-11-02">
                                         <p ng-show="userForm.date.$invalid && !userForm.date.$pristine"
                                            style="position: absolute"
                                            class="alert alert-danger">Please enter a valid date.</p>
@@ -123,14 +132,14 @@ module App {
                                 <tr>
                                     <th>login</th><th>BirthDay</th><th>Age</th>
                                 </tr>
-                                <tr ng-repeat="item in $ctrl.master track by $index">
+                                <tr ng-repeat="item in $ctrl.data track by $index">
                                 <div>
                                     <td>
-                                        <input type="text" ng-show="!!$ctrl.editButtons[$index]" ng-minlength="3" ng-maxlength="8" ng-model="$ctrl.editUser[$index].login" placeholder="{{item.login}}"/>
+                                        <input type="text" ng-show="!!$ctrl.editButtons[$index]" ng-minlength="3" ng-maxlength="8" ng-model="$ctrl.editUsers[$index].login" placeholder="{{item.login}}"/>
                                         <div ng-hide="!!$ctrl.editButtons[$index]">{{item.login}}</div>
                                     </td>
                                     <td>
-                                        <input type="date" ng-show="!!$ctrl.editButtons[$index]" ng-model="$ctrl.editUser[$index].birthDate"
+                                        <input type="date" ng-show="!!$ctrl.editButtons[$index]" ng-model="$ctrl.editUsers[$index].birthDate"
                                         placeholder="{{(item.birthDate == null) ? '' : item.birthDate.getFullYear()+'-'+(item.birthDate.getMonth()+1)+'-'+item.birthDate.getDate()}}"/>
                                         <div ng-hide="!!$ctrl.editButtons[$index]">{{(item.birthDate == null) ? '' : item.birthDate.getFullYear()+'-'+(item.birthDate.getMonth()+1)+'-'+item.birthDate.getDate()}}</div>
                                     </td>
