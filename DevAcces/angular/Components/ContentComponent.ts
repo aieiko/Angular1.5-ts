@@ -6,47 +6,60 @@ module App {
     class ContentCtrl implements IContent{
         public paths: Object;
         public myPath: string;
-        public greeting: string;
-        public aaa: (name: string) => void;
         public master: Array<Object>;
-        public data: {
-                login: string,
-                birthDate: Date,
-                age: number
-        };
+        public data: Object;
+        public user: {login; birthDate};
+        public editUser: {login; birthDate};
+        public edit: any;
 
         constructor() {
-            this.greeting = "Wellcome!";
             this.paths = ['choose path', 'LocalStore', 'API', 'path to JSON'];
             this.myPath = this.paths[0];
             this.master = [];
+        }
+
+        add() {
             this.data = {
-                login: 'fff',
-                birthDate: new Date(2000, 2, 22),
-                age: 21
+                login: this.user.login,
+                birthDate: this.user.birthDate,
+                age: (this.user.birthDate) ? Math.floor((+new Date() - this.user.birthDate)/(1000 * 60 *60 * 24 * 365)) : null
             };
-            this.aaa = function(name) {
-                this.greeting = "Hello " + name + "!";
+            this.master.push(this.data);
+            localStorage.setItem('CRUD', JSON.stringify(this.master));
+            this.user = {login: null, birthDate: null};
+            if(!this.edit) {
+                this.edit = new Array();
+                this.edit[0] = false
+            } else {
+                this.edit[this.edit.length] = false;
             }
         }
 
-        createStore() {
-            this.master.push(this.data);
-            console.log(this.master);
+        deletePerson(index) {
+            this.master.splice(index, 1);
             localStorage.setItem('CRUD', JSON.stringify(this.master));
         }
 
-        addPerson() {
-            this.master.push(this.data);
-            /*this.data = {
-                    login: '',
-                    birthDate: new Date,
-                    age: 0,
-            };*/
+        editPerson(index) {
+            this.edit[index] = true;
+            console.log(index);
+        }
+
+        savePerson(index) {
+            this.edit[index] = false;
+            this.data = {
+                login: this.editUser.login,
+                birthDate: this.editUser.birthDate,
+                age: (this.editUser.birthDate) ? Math.floor((+new Date() - this.editUser.birthDate)/(1000 * 60 *60 * 24 * 365)) : null
+            };
+            this.master[index] = this.data;
             localStorage.setItem('CRUD', JSON.stringify(this.master));
-            console.log(localStorage.getItem('CRUD'));
-            console.log(this.master);
-            console.log(new Date(2000, 2, 22));
+            this.editUser= {login: null, birthDate: null};
+        }
+
+        cancel(index) {
+            this.edit[index] = false;
+            this.editUser= {login: null, birthDate: null};
         }
 
     }
@@ -75,14 +88,61 @@ module App {
                                 <h1>{{$ctrl.greeting}}</h1>
                                 <h1>{{$ctrl.myPath}}</h1>
                                 <h1>{{$ctrl.master}}</h1>
-                                <div ng-click="$ctrl.createStore()">create</div>
-                                <div ng-click="$ctrl.addPerson()">add</div>
-                                <div ng-repeat="item in $ctrl.master track by $index">
-                                    <div>{{item.login}}</div>
-                                    <div>{{item.birthDate}}</div>
-                                    <div>{{item.age}}</div>
+
+
+                                <form class="form-inline" name="userForm" ng-submit="$ctrl.add()" novalidate>
+
+                                    <div class="form-group" ng-class="{ 'has-error' : userForm.login.$invalid && !userForm.login.$pristine }">
+                                        <label>Login</label>
+                                        <input type="text" name="login" class="form-control" ng-model="$ctrl.user.login" ng-minlength="3" ng-maxlength="8" required>
+                                        <p ng-show="userForm.login.$invalid && !userForm.login.$pristine && $ctrl.user.login.length > 0 || userForm.login.$error.minlength || userForm.login.$error.maxlength"
+                                           style="position: absolute"
+                                           class="alert alert-danger">You Login is empty or short or overlong.</p>
+
+                                    </div>
+
+                                    <div class="form-group" ng-class="{ 'has-error' : userForm.date.$invalid && !userForm.date.$pristine }">
+                                        <label>Birh date</label>
+                                        <input type="date" name="date" class="form-control" ng-model="$ctrl.user.birthDate" placeholder="2000-11-02">
+                                        <p ng-show="userForm.date.$invalid && !userForm.date.$pristine"
+                                           style="position: absolute"
+                                           class="alert alert-danger">Please enter a valid date.</p>
+                                    </div>
+
+                                    <button style="margin-top: 25px" type="submit" class="btn btn-primary" ng-disabled="userForm.$invalid">Add</button>
+
+                                </form>
+
+                                <button type="button" class="btn btn-success" ng-click="$ctrl.createStore()">create</button>
+                                <button type="button" class="btn btn-info" ng-click="$ctrl.addPerson()">add</button>
+                                <table class="table table-striped">
+                                <tr>
+                                    <th>login</th><th>BirthDay</th><th>Age</th>
+                                </tr>
+                                <tr ng-repeat="item in $ctrl.master track by $index">
+                                <div>
+                                    <td>
+                                        <input type="text" ng-show="!!$ctrl.edit[$index]" ng-minlength="3" ng-maxlength="8" ng-model="$ctrl.editUser.login" placeholder="{{item.login}}"/>
+                                        <div ng-hide="!!$ctrl.edit[$index]">{{item.login}}</div>
+                                    </td>
+                                    <td>
+                                        <input type="date" ng-show="!!$ctrl.edit[$index]" ng-model="$ctrl.editUser.birthDate" placeholder="{{item.birthDate.getFullYear()}}-{{(item.birthDate.getMonth() == 0) ? 12 : item.birthDate.getMonth()+1}}-{{item.birthDate.getDate()}}"/>
+                                        <div ng-hide="!!$ctrl.edit[$index]">{{item.birthDate.getFullYear()}}-{{(item.birthDate.getMonth() == 0) ? 12 : item.birthDate.getMonth()+1}}-{{item.birthDate.getDate()}}</div>
+                                    </td>
+                                    <td>{{item.age}}
+                                        <div ng-show="!!$ctrl.edit[$index]" style="float: right">
+                                            <button type="button" class="btn btn-success" ng-click="$ctrl.savePerson($index)">Save</button>
+                                            <button type="button" class="btn btn-danger" ng-click="$ctrl.cancel($index)">Cancel</button>
+                                        </div>
+                                        <div ng-hide="!!$ctrl.edit[$index]" style="float: right">
+                                            <button type="button" class="btn btn-warning" ng-click="$ctrl.editPerson($index)">Edit</button>
+                                            <button type="button" class="btn btn-danger" ng-click="$ctrl.deletePerson($index)">Delete</button>
+                                        </div>
+                                    </td>
                                 </div>
-                                <input type="text" ng-model="name"/>
+                                </tr>
+                                </table>
+
                                 <button ng-click="$ctrl.login(name)">Add Click</button>
                             </div>`;
             this.controller = ContentCtrl;
