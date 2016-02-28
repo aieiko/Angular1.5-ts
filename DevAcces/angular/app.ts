@@ -4,5 +4,7 @@ module App {
 
     angular.module('app', [])
         .component('contentcomponent', new ContentComponent())
-        .component('localstorecomponent', new LocalStoreComponent());
+        .component('localstorecomponent', new LocalStoreComponent())
+        .component('listcomponent', new ListComponent())
+        .component('thumbscomponent', new ThumbsComponent());
 }

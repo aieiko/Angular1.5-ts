@@ -8,34 +8,56 @@ module App {
         public myPath: string;
         public data: any;
         public user: Object;
+
         public addUser: {login; birthDate};
         public editUsers: {login; birthDate};
         public editButtons: any;
 
+        public typeDispData: string;
+        public filters: {
+            age: {def; descending; increase};
+            login: {def; descending; increase}
+        };
+
+        public localStorageUse: string;
+
         constructor() {
             this.paths = ['choose path', 'LocalStore', 'API', 'path to JSON'];
             this.myPath = this.paths[0];
-            this.data = (localStorage.length == 1) ? [] : JSON.parse(localStorage['CRUD']);
+            this.data = [];/*(localStorage.length == 1) ? [] : JSON.parse(localStorage[this.localStorageUse]);*/
+            this.typeDispData = 'list';
+            this.filters = {
+                age: {
+                    def: true,
+                    descending: false,
+                    increase: false
+                },
+                login: {
+                    def: true,
+                    descending: false,
+                    increase: false
+                }
+            };
+
             if(localStorage.length == 1) {
                 this.editButtons = false;
+                this.localStorageUse = null;
             } else {
                 this.editButtons = [];
                 for(var i=0; i <= this.data.length-1; i++){
                     this.editButtons[i] = false;
-                    this.data[i].birthDate = new Date(Date.parse(this.data[i].birthDate));
                 }
             }
         }
 
         add() {
-            console.log(this.editButtons);
             this.user = {
                 login: this.addUser.login,
                 birthDate: this.addUser.birthDate,
                 age: (this.addUser.birthDate) ? Math.floor((+new Date() - this.addUser.birthDate)/(1000 * 60 *60 * 24 * 365)) : null
             };
             this.data.push(this.user);
-            localStorage.setItem('CRUD', JSON.stringify(this.data));
+            localStorage.setItem(this.localStorageUse, JSON.stringify(this.data));
             this.addUser = {login: null, birthDate: null};
             if(!this.editButtons) {
                 this.editButtons = new Array();
@@ -47,7 +69,7 @@ module App {
 
         deletePerson(index) {
             this.data.splice(index, 1);
-            localStorage.setItem('CRUD', JSON.stringify(this.data));
+            localStorage.setItem(this.localStorageUse, JSON.stringify(this.data));
         }
 
         editPerson(index) {
@@ -65,7 +87,7 @@ module App {
                     age: (this.editUsers[index].birthDate) ? Math.floor((+new Date() - this.editUsers[index].birthDate)/(1000 * 60 *60 * 24 * 365)) : (this.data[index].age == null) ? null : this.data[index].age
                 };
                 this.data[index] = this.user;
-                localStorage.setItem('CRUD', JSON.stringify(this.data));
+                localStorage.setItem(this.localStorageUse, JSON.stringify(this.data));
                 this.editUsers[index]= {login: null, birthDate: null};
             }
         }
@@ -75,6 +97,48 @@ module App {
             this.editUsers= {login: null, birthDate: null};
         }
 
+        //Filters for list
+
+        filterAge() {
+            if(!this.filters.login.def) {
+                this.filters.login = {
+                    def: true,
+                    descending: false,
+                    increase: false
+                }
+            }
+            if(this.filters.age.def && !this.filters.age.descending && !this.filters.age.increase) {
+                this.filters.age.def = false;
+                this.filters.age.descending = true;
+            } else if(!this.filters.age.def && this.filters.age.descending && !this.filters.age.increase) {
+                this.filters.age.descending = false;
+                this.filters.age.increase = true;
+            } else {
+                this.filters.age.def = true;
+                this.filters.age.increase = false;
+            }
+        }
+
+        filterLogin() {
+            if(!this.filters.age.def) {
+                this.filters.age = {
+                    def: true,
+                    descending: false,
+                    increase: false
+                }
+            }
+            if(this.filters.login.def && !this.filters.login.descending && !this.filters.login.increase) {
+                this.filters.login.def = false;
+                this.filters.login.descending = true;
+            } else if(!this.filters.login.def && this.filters.login.descending && !this.filters.login.increase) {
+                this.filters.login.descending = false;
+                this.filters.login.increase = true;
+            } else {
+                this.filters.login.def = true;
+                this.filters.login.increase = false;
+            }
+        }
+
     }
     export class ContentComponent implements ng.IComponentOptions {
         public bindings:any;
@@ -82,18 +146,14 @@ module App {
         public template:string;
 
         constructor() {
-            this.bindings = {
-                textBinding: '@',
-                dataBinding: '<',
-                functionBinding: '&'
-            };
+
             this.template = `<div>
                                 <lable>
                                     <select ng-model="$ctrl.myPath" ng-options="path for path in $ctrl.paths"></select>
                                 </lable>
                                 <div class="animate-switch-container"
                                      ng-switch on="$ctrl.myPath">
-                                  <div class="animate-switch" ng-switch-when="LocalStore"><localstorecomponent></localstorecomponent></div>
+                                  <div class="animate-switch" ng-switch-when="LocalStore"><localstorecomponent jok-value="$ctrl.typeDispData" datat-value="$ctrl.data" storageuse-value="$ctrl.localStorageUse"></localstorecomponent></div>
                                   <div class="animate-switch" ng-switch-when="API">Home Span</div>
                                   <div class="animate-switch" ng-switch-when="path to JSON">Home Span</div>
                                   <div class="animate-switch" ng-switch-default></div>
@@ -101,9 +161,10 @@ module App {
                                 <h1>{{$ctrl.greeting}}</h1>
                                 <h1>{{$ctrl.myPath}}</h1>
                                 <h1>{{$ctrl.data}}</h1>
+                                <h1>{{$ctrl.typeDispData}}</h1>
 
 
-                                <form class="form-inline" name="userForm" ng-submit="$ctrl.add()" novalidate>
+                                <form class="form-inline" name="userForm" ng-show="!!$ctrl.localStorageUse" ng-submit="$ctrl.add()" novalidate>
 
                                     <div class="form-group" ng-class="{ 'has-error' : userForm.login.$invalid && !userForm.login.$pristine }">
                                         <label>Login</label>
@@ -125,14 +186,37 @@ module App {
                                     <button style="margin-top: 25px" type="submit" class="btn btn-primary" ng-disabled="userForm.$invalid">Add</button>
 
                                 </form>
-
-                                <button type="button" class="btn btn-success" ng-click="$ctrl.createStore()">create</button>
-                                <button type="button" class="btn btn-info" ng-click="$ctrl.addPerson()">add</button>
                                 <table class="table table-striped">
+                                <h1>{{$ctrl.localStorageUse}}</h1>
+                                <input style="width: 350px; margin: auto" type="text" class="form-control" placeholder="search" ng-model="search"/>
                                 <tr>
-                                    <th>login</th><th>BirthDay</th><th>Age</th>
+                                    <th>
+                                        <div style="width: 51px" ng-click="$ctrl.filterLogin()" ng-class="{'dropdown': !$ctrl.filters.login.def && !$ctrl.filters.login.descending, 'dropup': $ctrl.filters.login.increase}">
+                                            <button class="btn btn-default" type="button">
+                                                Login
+                                                <span ng-class="{'caret': !$ctrl.filters.login.def}"></span>
+                                        </div>
+                                    </th>
+                                    <th>BirthDay</th>
+                                    <th>
+                                        <div style="width: 51px; float: left" ng-click="$ctrl.filterAge()" ng-class="{'dropdown': !$ctrl.filters.age.def && !$ctrl.filters.age.descending, 'dropup': $ctrl.filters.age.increase}">
+                                            <button class="btn btn-default" type="button">
+                                                Age
+                                                <span ng-class="{'caret': !$ctrl.filters.age.def}"></span>
+                                        </div>
+
+                                        <div class="btn-group" data-toggle="buttons" style="float:right">
+                                          <label class="btn btn-primary" ng-class="{'active': $ctrl.typeDispData == 'list' }">
+                                            <input type="radio" ng-model="$ctrl.typeDispData" value="list"><span class="glyphicon glyphicon-list"></span>
+                                          </label>
+                                          <label class="btn btn-primary" ng-class="{'active': $ctrl.typeDispData == 'thumbs' }">
+                                            <input type="radio" ng-model="$ctrl.typeDispData" value="thumbs"><span class="glyphicon glyphicon-th"></span>
+                                          </label>
+                                        </div>
+
+                                    </th>
                                 </tr>
-                                <tr ng-repeat="item in $ctrl.data track by $index">
+                                <tr ng-repeat="item in $ctrl.data | filter:search track by $index">
                                 <div>
                                     <td>
                                         <input type="text" ng-show="!!$ctrl.editButtons[$index]" ng-minlength="3" ng-maxlength="8" ng-model="$ctrl.editUsers[$index].login" placeholder="{{item.login}}"/>
@@ -141,6 +225,7 @@ module App {
                                     <td>
                                         <input type="date" ng-show="!!$ctrl.editButtons[$index]" ng-model="$ctrl.editUsers[$index].birthDate"
                                         placeholder="{{(item.birthDate == null) ? '' : item.birthDate.getFullYear()+'-'+(item.birthDate.getMonth()+1)+'-'+item.birthDate.getDate()}}"/>
+
                                         <div ng-hide="!!$ctrl.editButtons[$index]">{{(item.birthDate == null) ? '' : item.birthDate.getFullYear()+'-'+(item.birthDate.getMonth()+1)+'-'+item.birthDate.getDate()}}</div>
                                     </td>
                                     <td>{{item.age}}
@@ -156,22 +241,61 @@ module App {
                                 </div>
                                 </tr>
                                 </table>
-
-                                <button ng-click="$ctrl.login(name)">Add Click</button>
                             </div>`;
             this.controller = ContentCtrl;
         }
-
     }
 
     class LocalStoreCtrl {
-        data: any;
-        nameData: string;
-        constructor() {
-            this.data = (localStorage.length == 1)? '' :  localStorage.getItem(this.nameData)
-        }
-    }
+        public jokValue;
+        public storageuseValue;
+        public selectData;
+        public datatValue;
+        public storageName:string;
+        public localStorageNames: Array<string>;
 
+        constructor() {
+            this.jokValue = 'thumbs';
+            this.localStorageNames = [];
+            if(localStorage.length !== 1) {
+                for(var i=0; i <= localStorage.length-2; i++)
+                    this.localStorageNames[i] = localStorage.key(i);
+                this.selectData = this.localStorageNames[0];
+                this.localStorageNames.length = this.localStorageNames.length-2;
+            }
+        }
+
+        createStorage() {
+            console.log('create');
+            localStorage.setItem(this.storageName, JSON.stringify([]));
+            for(var i=0; i <= localStorage.length-2; i++)
+                this.localStorageNames[i] = localStorage.key(i);
+            this.localStorageNames.length = this.localStorageNames.length-2;
+            this.selectData = this.storageName;
+            this.storageName = null;
+            this.datatValue = JSON.parse(localStorage[this.selectData]);
+            this.storageuseValue = this.selectData;
+        }
+
+        getStorage() {
+            console.log('get');
+            this.datatValue = JSON.parse(localStorage[this.selectData]);
+            if(this.datatValue.length >= 1) {
+                for(var i=0; i <= this.datatValue.length-1; i++)
+                    this.datatValue[i].birthDate = (this.datatValue[i].birthDate == null) ? null : new Date(Date.parse(this.datatValue[i].birthDate));
+            }
+            this.storageuseValue = this.selectData;
+        }
+
+        removeStorage() {
+            console.log('delete');
+            localStorage.removeItem(this.selectData);
+            for(var i=0; i <= localStorage.length-2; i++)
+                this.localStorageNames[i] = localStorage.key(i);
+            this.localStorageNames.length = this.localStorageNames.length-2;
+        }
+
+    }
     export class LocalStoreComponent implements ng.IComponentOptions {
         public bindings:any;
         public controller:any;
@@ -180,14 +304,45 @@ module App {
         constructor() {
             this.bindings = {
                 textBinding: '@',
-                dataBinding: '<',
+                jokValue: '=',
+                storagenamesValue: '=',
+                datatValue: '=',
+                storageuseValue: '=',
                 functionBinding: '&'
             };
             this.template = `<div>
-
+                            <lable>
+                                <select ng-model="$ctrl.selectData" ng-options="name for name in $ctrl.localStorageNames"></select>
+                            </lable>
+                            <button type="button" ng-click="$ctrl.getStorage()">GET</button>
+                            <button type="button" ng-click="$ctrl.removeStorage()">Delete</button>
+                            <input type="text" ng-model="$ctrl.storageName"/>
+                            <button type="button" ng-click="$ctrl.createStorage()">Create</button>
                              </div>`;
             this.controller = LocalStoreCtrl;
         }
+    }
+
+    class ListCtrl extends ContentCtrl {
+        public ContentCtrl
+        constructor() {
+            this.add = this.ContentCtrl.add();
+            super()
+        }
+    }
+
+    export class ListComponent {
+        public template:string;
+        public controller:any;
+        constructor() {
+            this.template = `<div>
+
+                            </div> `
+        }
+    }
+
+    export class ThumbsComponent extends ContentCtrl {
 
     }
+
 }
