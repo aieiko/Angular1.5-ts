@@ -139,19 +139,20 @@ var App;
         function LocalStoreCtrl() {
             this.jokValue = 'thumbs';
             this.localStorageNames = [];
+            if (localStorage['debug']) {
+                localStorage.removeItem('debug');
+            }
             if (localStorage.length !== 1) {
-                for (var i = 0; i <= localStorage.length - 2; i++)
+                for (var i = 0; i <= localStorage.length - 1; i++)
                     this.localStorageNames[i] = localStorage.key(i);
                 this.selectData = this.localStorageNames[0];
-                this.localStorageNames.length = this.localStorageNames.length - 2;
             }
         }
         LocalStoreCtrl.prototype.createStorage = function () {
             console.log('create');
             localStorage.setItem(this.storageName, JSON.stringify([]));
-            for (var i = 0; i <= localStorage.length - 2; i++)
+            for (var i = 0; i <= localStorage.length - 1; i++)
                 this.localStorageNames[i] = localStorage.key(i);
-            this.localStorageNames.length = this.localStorageNames.length - 2;
             this.selectData = this.storageName;
             this.storageName = null;
             this.datatValue = JSON.parse(localStorage[this.selectData]);
@@ -168,10 +169,15 @@ var App;
         };
         LocalStoreCtrl.prototype.removeStorage = function () {
             console.log('delete');
-            localStorage.removeItem(this.selectData);
-            for (var i = 0; i <= localStorage.length - 2; i++)
-                this.localStorageNames[i] = localStorage.key(i);
-            this.localStorageNames.length = this.localStorageNames.length - 2;
+            if (this.selectData == this.storageuseValue) {
+                alert('You can\'t delet this table because ' + this.selectData + ' used');
+            }
+            else {
+                localStorage.removeItem(this.selectData);
+                for (var i = 0; i <= localStorage.length - 1; i++)
+                    this.localStorageNames[i] = localStorage.key(i);
+                this.selectData = this.storageuseValue || this.localStorageNames[0];
+            }
         };
         return LocalStoreCtrl;
     })();
@@ -185,7 +191,7 @@ var App;
                 storageuseValue: '=',
                 functionBinding: '&'
             };
-            this.template = "<div>\n                            <lable>\n                                <select ng-model=\"$ctrl.selectData\" ng-options=\"name for name in $ctrl.localStorageNames\"></select>\n                            </lable>\n                            <button type=\"button\" ng-click=\"$ctrl.getStorage()\">GET</button>\n                            <button type=\"button\" ng-click=\"$ctrl.removeStorage()\">Delete</button>\n                            <input type=\"text\" ng-model=\"$ctrl.storageName\"/>\n                            <button type=\"button\" ng-click=\"$ctrl.createStorage()\">Create</button>\n                             </div>";
+            this.template = "<div>\n                            <lable>\n                                <select ng-model=\"$ctrl.selectData\" ng-options=\"name for name in $ctrl.localStorageNames\"></select>\n                            </lable>\n                            <button type=\"button\" class=\"btn btn-warning\" ng-click=\"$ctrl.getStorage()\">GET</button>\n                            <button type=\"button\" class=\"btn btn-danger\" ng-click=\"$ctrl.removeStorage()\">Delete</button>\n                            <div style=\"display: flex\">\n                                <input type=\"text\" style=\"width: 300px\" class=\"form-control\" ng-model=\"$ctrl.storageName\"/>\n                                <button type=\"button\" class=\"btn btn-success\" ng-click=\"$ctrl.createStorage()\">Create</button>\n                            </div>\n                            </div>";
             this.controller = LocalStoreCtrl;
         }
         return LocalStoreComponent;
