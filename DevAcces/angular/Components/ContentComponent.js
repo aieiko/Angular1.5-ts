@@ -142,7 +142,7 @@ var App;
             if (localStorage['debug']) {
                 localStorage.removeItem('debug');
             }
-            if (localStorage.length !== 1) {
+            if (localStorage.length !== 0) {
                 for (var i = 0; i <= localStorage.length - 1; i++)
                     this.localStorageNames[i] = localStorage.key(i);
                 this.selectData = this.localStorageNames[0];
@@ -174,9 +174,14 @@ var App;
             }
             else {
                 localStorage.removeItem(this.selectData);
-                for (var i = 0; i <= localStorage.length - 1; i++)
-                    this.localStorageNames[i] = localStorage.key(i);
-                this.selectData = this.storageuseValue || this.localStorageNames[0];
+                if (localStorage.length == 0) {
+                    this.localStorageNames = [];
+                }
+                else {
+                    for (var i = 0; i <= localStorage.length - 1; i++)
+                        this.localStorageNames[i] = localStorage.key(i);
+                    this.selectData = this.storageuseValue || this.localStorageNames[0];
+                }
             }
         };
         return LocalStoreCtrl;
@@ -191,7 +196,7 @@ var App;
                 storageuseValue: '=',
                 functionBinding: '&'
             };
-            this.template = "<div>\n                            <lable>\n                                <select ng-model=\"$ctrl.selectData\" ng-options=\"name for name in $ctrl.localStorageNames\"></select>\n                            </lable>\n                            <button type=\"button\" class=\"btn btn-warning\" ng-click=\"$ctrl.getStorage()\">GET</button>\n                            <button type=\"button\" class=\"btn btn-danger\" ng-click=\"$ctrl.removeStorage()\">Delete</button>\n                            <div style=\"display: flex\">\n                                <input type=\"text\" style=\"width: 300px\" class=\"form-control\" ng-model=\"$ctrl.storageName\"/>\n                                <button type=\"button\" class=\"btn btn-success\" ng-click=\"$ctrl.createStorage()\">Create</button>\n                            </div>\n                            </div>";
+            this.template = "<div>\n                            <lable>\n                                <select ng-model=\"$ctrl.selectData\" ng-options=\"name for name in $ctrl.localStorageNames\"></select>\n                            </lable>\n                            <button type=\"button\" class=\"btn btn-warning\" ng-click=\"$ctrl.getStorage()\">GET</button>\n                            <button type=\"button\" class=\"btn btn-danger\" ng-click=\"$ctrl.removeStorage()\">Delete</button>\n                            <div style=\"display: flex\">\n                                <input type=\"text\" style=\"width: 300px\" minlength=\"3\" maxlength=\"8\" class=\"form-control\" ng-model=\"$ctrl.storageName\"/>\n                                <button type=\"button\" class=\"btn btn-success\" ng-click=\"$ctrl.createStorage()\">Create</button>\n                            </div>\n                            </div>";
             this.controller = LocalStoreCtrl;
         }
         return LocalStoreComponent;

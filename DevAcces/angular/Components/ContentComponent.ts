@@ -260,7 +260,7 @@ module App {
             if(localStorage['debug']) {
                 localStorage.removeItem('debug');
             }
-            if(localStorage.length !== 1) {
+            if(localStorage.length !== 0) {
                 for(var i=0; i <= localStorage.length-1; i++)
                     this.localStorageNames[i] = localStorage.key(i);
                 this.selectData = this.localStorageNames[0];
@@ -290,14 +290,18 @@ module App {
 
         removeStorage() {
             console.log('delete');
-            if(this.selectData == this.storageuseValue) {
-                alert('You can\'t delet this table because '+this.selectData+' used');
-            } else {
-                localStorage.removeItem(this.selectData);
-                for(var i=0; i <= localStorage.length-1; i++)
-                    this.localStorageNames[i] = localStorage.key(i);
-                this.selectData = this.storageuseValue || this.localStorageNames[0];
-            }
+                if(this.selectData == this.storageuseValue) {
+                    alert('You can\'t delet this table because '+this.selectData+' used');
+                } else {
+                    localStorage.removeItem(this.selectData);
+                    if(localStorage.length == 0) {
+                        this.localStorageNames = [];
+                    } else {
+                        for(var i=0; i <= localStorage.length-1; i++)
+                            this.localStorageNames[i] = localStorage.key(i);
+                        this.selectData = this.storageuseValue || this.localStorageNames[0];
+                    }
+                }
         }
 
     }
@@ -322,7 +326,7 @@ module App {
                             <button type="button" class="btn btn-warning" ng-click="$ctrl.getStorage()">GET</button>
                             <button type="button" class="btn btn-danger" ng-click="$ctrl.removeStorage()">Delete</button>
                             <div style="display: flex">
-                                <input type="text" style="width: 300px" class="form-control" ng-model="$ctrl.storageName"/>
+                                <input type="text" style="width: 300px" minlength="3" maxlength="8" class="form-control" ng-model="$ctrl.storageName"/>
                                 <button type="button" class="btn btn-success" ng-click="$ctrl.createStorage()">Create</button>
                             </div>
                             </div>`;
