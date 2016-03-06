@@ -22,7 +22,7 @@ module App {
         public localStorageUse: string;
 
         constructor() {
-            this.paths = ['choose path', 'LocalStore', 'API', 'path to JSON'];
+            this.paths = ['choose path', 'LocalStore', 'API'];
             this.myPath = this.paths[0];
             this.data = [];/*(localStorage.length == 1) ? [] : JSON.parse(localStorage[this.localStorageUse]);*/
             this.typeDispData = 'list';
@@ -155,7 +155,6 @@ module App {
                                      ng-switch on="$ctrl.myPath">
                                   <div class="animate-switch" ng-switch-when="LocalStore"><localstorecomponent jok-value="$ctrl.typeDispData" datat-value="$ctrl.data" storageuse-value="$ctrl.localStorageUse"></localstorecomponent></div>
                                   <div class="animate-switch" ng-switch-when="API">Home Span</div>
-                                  <div class="animate-switch" ng-switch-when="path to JSON">Home Span</div>
                                   <div class="animate-switch" ng-switch-default></div>
                                 </div>
                                 <h1>{{$ctrl.greeting}}</h1>
@@ -254,6 +253,12 @@ module App {
         public storageName:string;
         public localStorageNames: Array<string>;
 
+        public url:string;
+        public fileName:string;
+
+        public file;
+        public reader;
+
         constructor() {
             this.jokValue = 'thumbs';
             this.localStorageNames = [];
@@ -266,6 +271,45 @@ module App {
                 this.selectData = this.localStorageNames[0];
             }
         }
+        //JSON
+
+        createJson() {
+            console.log('create JSON');
+            var blob = new Blob([localStorage[this.selectData]],{type: 'application/json'});
+            this.fileName = this.selectData;
+            this.url = URL.createObjectURL(blob);
+        }
+
+        readFile(file, callback) {
+            this.reader = new FileReader;
+            this.reader.onload = function(event) {
+                console.log("Содержимое файла: " + event.target.result);
+                callback(event.target.result);
+
+            };
+
+            this.reader.onerror = function(event) {
+                console.error("Файл не может быть прочитан! код " + event.target.error.code);
+            };
+            this.reader.readAsText(file);
+        }
+
+        loadJson() {
+            var self = this;
+            this.readFile(this.file, function (result) {
+                localStorage.setItem(self.file.name, result);
+
+                self.selectData = self.file.name;
+                for(var i=0; i <= localStorage.length-1; i++) {
+                    self.localStorageNames[i] = localStorage.key(i);
+                }
+                console.log(self.localStorageNames);
+                self.getStorage();
+            });
+            console.log('load JSON');
+        }
+
+        //Storage
 
         createStorage() {
             console.log('create');
@@ -329,6 +373,14 @@ module App {
                                 <input type="text" style="width: 300px" minlength="3" maxlength="8" class="form-control" ng-model="$ctrl.storageName"/>
                                 <button type="button" class="btn btn-success" ng-click="$ctrl.createStorage()">Create</button>
                             </div>
+                            <div>
+                            <button type="button" ng-click="$ctrl.createJson()">Get JSON file</button>
+                            <a ng-href={{$ctrl.url}} download="{{$ctrl.fileName}}">Download {{$ctrl.fileName}}</a>
+                            </div>
+                            <div>
+                            <input type='file' file-model='$ctrl.file'>
+                            <button type="button" ng-click="$ctrl.loadJson()"></button>
+                            </div>
                             </div>`;
             this.controller = LocalStoreCtrl;
         }
@@ -341,7 +393,6 @@ module App {
             super()
         }
     }
-
     export class ListComponent {
         public template:string;
         public controller:any;
@@ -355,5 +406,4 @@ module App {
     export class ThumbsComponent extends ContentCtrl {
 
     }
-
 }
